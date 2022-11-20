@@ -34,17 +34,18 @@ public class BaseGridNode
     public void CalculateNeighbors()
     {
         neighbors = new List<BaseGridNode>();
+        BaseGridNode[,] matrix = BaseGridGenerator.Instance.GetMatrix();
 
         for (int x = -1; x <= 1; x++)
         {
             for (int z = -1; z <= 1; z++)
             {
-                if (!(x == 0 && z == 0) && matrixPos.x + x > 0 && matrixPos.x + x < BaseGridGenerator.Instance.matrix.GetLength(0) &&
-                    matrixPos.y + z > 0 && matrixPos.y + z < BaseGridGenerator.Instance.matrix.GetLength(1))
+                if (!(x == 0 && z == 0) && matrixPos.x + x > 0 && matrixPos.x + x < matrix.GetLength(0) &&
+                    matrixPos.y + z > 0 && matrixPos.y + z < matrix.GetLength(1))
                 {
-                    if(BaseGridGenerator.Instance.matrix[matrixPos.x + x, matrixPos.y + z] != null) 
+                    if(matrix[matrixPos.x + x, matrixPos.y + z] != null) 
                     {
-                        neighbors.Add(BaseGridGenerator.Instance.matrix[matrixPos.x + x, matrixPos.y + z]);
+                        neighbors.Add(matrix[matrixPos.x + x, matrixPos.y + z]);
                     }
                 }
             }
@@ -63,17 +64,18 @@ public class BaseGridNode
         if(neighbors == null || hashing)
         {
             neighbors = new List<BaseGridNode>();
+            BaseGridNode[,] matrix = BaseGridGenerator.Instance.GetMatrix();
 
             for (int x = -1; x <= 1; x++)
             {
                 for (int z = -1; z <= 1; z++)
                 {
-                    if (!(x == 0 && z == 0) && matrixPos.x + x > 0 && matrixPos.x + x < BaseGridGenerator.Instance.matrix.GetLength(0) &&
-                        matrixPos.y + z > 0 && matrixPos.y + z < BaseGridGenerator.Instance.matrix.GetLength(1))
+                    if (!(x == 0 && z == 0) && matrixPos.x + x > 0 && matrixPos.x + x < matrix.GetLength(0) &&
+                        matrixPos.y + z > 0 && matrixPos.y + z < matrix.GetLength(1))
                     {
-                        if (BaseGridGenerator.Instance.matrix[matrixPos.x + x, matrixPos.y + z] != null)
+                        if (matrix[matrixPos.x + x, matrixPos.y + z] != null)
                         {
-                            Vector3 pos = BaseGridGenerator.Instance.matrix[matrixPos.x + x, matrixPos.y + z].GetPosition();
+                            Vector3 pos = matrix[matrixPos.x + x, matrixPos.y + z].GetPosition();
                             if (!Physics.Linecast(GetPosition(), pos))
                             {
                                 Vector3 targetDirection = pos - GetPosition();
@@ -83,7 +85,7 @@ public class BaseGridNode
 
                                 if (Mathf.Abs(angle) < maxSlope)
                                 {
-                                    neighbors.Add(BaseGridGenerator.Instance.matrix[matrixPos.x + x, matrixPos.y + z]);
+                                    neighbors.Add(matrix[matrixPos.x + x, matrixPos.y + z]);
                                 }
                             }
                         }

@@ -1,48 +1,64 @@
-using System.Collections.Generic;
-using UnityEngine;
 using ApexInspector;
-using Unity.Collections;
-using UnityEngine.Rendering;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 [HideScriptField]
 public class BaseGridGenerator : Singleton<BaseGridGenerator>
 {
     [SerializeField]
+    [Foldout("Advanced Settings")]
+    private bool usePoints = true;
+
+    [SerializeField]
+    [Foldout("Advanced Settings")]
+    [NotNull]
     private MeshGenerator meshGenerator;
 
     [SerializeField]
+    [Foldout("Advanced Settings")]
+    [Range(0, 90)]
     private int angularCoefficient;
 
     [SerializeField]
+    [Foldout("Advanced Settings")]
+    [Range(0, 1000)]
     private int angularMultiplier;
 
     [SerializeField]
+    [Foldout("Advanced Settings")]
+    [Range(0.0f, 2.0f)]
     private float pointHeightOffset;
 
     [SerializeField]
+    [Foldout("Advanced Settings")]
+    [Range(0, 90)]
     private int maxSlope = 50;
 
     [SerializeField]
+    [Foldout("Advanced Settings")]
+    [Range(0.0f, 2.0f)]
+    private float offset = 1f;
+
+    [SerializeField]
+    [Foldout("Debug Settings")]
     private bool debugMode;
 
     [SerializeField]
+    [Foldout("Debug Settings")]
     [VisibleIf("debugMode")]
     private bool debugOnlyNonWalkable;
 
+    //Stored required properties.
     private Dictionary<Vector2Int, BaseGridNode> twoDpoints;
-    public BaseGridNode[,] matrix;
-    public List<Vector3> points;
-
-    private List<Vertex> vertToPrint;
-
-    public Vector3[,] vecMatrix;
-    public bool flag = false;
-    public Vector2Int size;
+    private HashSet<Vector3> points;
+    private BaseGridNode[,] matrix;
+    private Vector3[,] vecMatrix;
+    private Vector2Int size;
 
     public void BuildGrid(Transform startPosition, Vector2Int gridSize)
     {
-        print(11111);
+        points = new HashSet<Vector3>();
         size = gridSize;
         twoDpoints = new Dictionary<Vector2Int, BaseGridNode>();
         matrix = new BaseGridNode[gridSize.x * 2, gridSize.y * 2];
@@ -50,54 +66,144 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
 
         float rHeight = startPosition.position.y + 10;
 
-/*        for (int x = -gridSize.x; x < gridSize.x; x++)
+        if (usePoints)
         {
-            for (int z = -gridSize.y; z < gridSize.y; z++)
-            {
-                TryAddPoint(startPosition.position + new Vector3(x, rHeight, z), new Vector2Int(x + gridSize.x, z + gridSize.y));
-            }
-        }*/
+            ByPoints(startPosition.position, rHeight);
+        }
+        else
+        {
+            ByMesh(startPosition.position, rHeight);
+        }
+    }
 
-        for (int z = 0; z < gridSize.y * 2; z++)
+    private void ByPoints(Vector3 startPosition, float rHeight)
+    {
+        for (int x = -size.x; x < size.x; x++)
         {
-            for (int x = 0; x < gridSize.x * 2; x++)
+            for (int z = -size.y; z < size.y; z++)
             {
-                Vector3 sPosition = new Vector3(startPosition.position.x - gridSize.x, startPosition.position.y, startPosition.position.z - gridSize.y);
+                TryAddPoint(startPosition + new Vector3(x, rHeight, z), new Vector2Int(x + size.x, z + size.y));
+            }
+        }
+
+        for (int z = 0; z < size.y * 2; z++)
+        {
+            for (int x = 0; x < size.x * 2; x++)
+            {
+                Vector3 sPosition = new Vector3(startPosition.x - size.x, startPosition.y, startPosition.z - size.y);
 
                 RaycastHit hit;
-                Vector3 pos = sPosition + new Vector3(x, rHeight, z);
+                Vector3 pos = sPosition + new Vector3(x + Random.Range(0, 0.15f), rHeight, z + Random.Range(0, 0.15f));
                 if (Physics.Raycast(pos, Vector3.down, out hit))
                 {
                     Vector3 nodePos = new Vector3(hit.point.x, hit.point.y + pointHeightOffset, hit.point.z);
                     points.Add(nodePos);
-                    //print($"{nodePos.x} {nodePos.z}");
                     vecMatrix[x, z] = nodePos;
                 }
             }
         }
 
-        List<Vertex> vert = new List<Vertex>();
+        meshGenerator.Initialize(new Vector2Int(size.x * 2, size.y * 2), vecMatrix);
+    }
 
-        for (int z = 0; z < gridSize.y * 2; z++)
+
+    private void ByMesh(Vector3 startPosition, float rHeight)
+    {
+        for (int z = 0; z < size.y * 2; z++)
         {
-            for (int x = 0; x < gridSize.x * 2; x++)
+            for (int x = 0; x < size.x * 2; x++)
             {
-                Vertex vertex = new Vertex(vecMatrix[x, z]);
-                vert.Add(vertex);
+                Vector3 sPosition = new Vector3(startPosition.x - size.x, startPosition.y, startPosition.z - size.y);
+
+                RaycastHit hit;
+                Vector3 pos = sPosition + new Vector3(x + Random.Range(0, 0.15f), rHeight, z + Random.Range(0, 0.15f));
+                if (Physics.Raycast(pos, Vector3.down, out hit))
+                {
+                    Vector3 nodePos = new Vector3(hit.point.x, hit.point.y + pointHeightOffset, hit.point.z);
+                    points.Add(nodePos);
+                }
+
+                sPosition = new Vector3(startPosition.x - size.x, startPosition.y, startPosition.z - size.y);
+
+                pos = sPosition + new Vector3(((x + Random.Range(0, 0.15f)) - 0.5f), rHeight, ((z + Random.Range(0, 0.15f)) - 0.5f));
+                if (Physics.Raycast(pos, Vector3.down, out hit))
+                {
+                    Vector3 nodePos = new Vector3(hit.point.x, hit.point.y + pointHeightOffset, hit.point.z);
+                    points.Add(nodePos);
+                }
             }
         }
 
-        //vertToPrint = JarvisMarchAlgorithm.GetConvexHull(vert);
-
-        meshGenerator.Initialize(points);
-        //meshGenerator.Initialize(new Vector2Int(gridSize.x * 2, gridSize.y * 2), vecMatrix);
-
-        flag = true;
+        meshGenerator.Initialize(MakeClusters());
     }
 
-    private void BuildMesh()
+    private List<Cluster> MakeClusters()
     {
+        List<Cluster> clusters = new List<Cluster>();
+        while (points.Count > 0)
+        {
+            Cluster cluster = MakeCluster();
+            clusters.Add(cluster);
+        }
 
+        return clusters;
+    }
+
+    private Cluster MakeCluster()
+    {
+        HashSet<Vector3> clusterPoint = new HashSet<Vector3>();
+        HashSet<Vector3> processPoints = new HashSet<Vector3>();
+        Vector3 initPoint = points.First();
+        clusterPoint.Add(initPoint);
+        points.Remove(initPoint);
+
+        processPoints = GetNearestPoints(initPoint);
+
+        while (processPoints.Count > 0)
+        {
+            HashSet<Vector3> pointToAdd = new HashSet<Vector3>();
+            foreach (Vector3 item in processPoints)
+            {
+                HashSet<Vector3> vectors = GetNearestPoints(item);
+                foreach (Vector3 vec in vectors)
+                {
+                    pointToAdd.Add(vec);
+                }
+            }
+
+            foreach (Vector3 item in processPoints)
+            {
+                clusterPoint.Add(item);
+            }
+            processPoints.Clear();
+
+            foreach (Vector3 item in pointToAdd)
+            {
+                processPoints.Add(item);
+            }
+        }
+
+        return new Cluster(clusterPoint);
+    }
+
+    public HashSet<Vector3> GetNearestPoints(Vector3 point)
+    {
+        HashSet<Vector3> result = new HashSet<Vector3>();
+
+        foreach (Vector3 item in points)
+        {
+            if(Vector3.Distance(point, item) <= offset)
+            {
+                result.Add(item);
+            }
+        }
+
+        foreach (Vector3 item in result)
+        {
+            points.Remove(item);
+        }
+
+        return result;
     }
 
     private void TryAddPoint(Vector3 pos, Vector2Int matrixPos)
@@ -136,40 +242,7 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
 
     private void OnDrawGizmos()
     {
-        if(vertToPrint != null)
-        {
-            Gizmos.color = Color.red;
-            for (int i = 0; i < vertToPrint.Count - 1; i++)
-            {
-                Gizmos.DrawLine(vertToPrint[i].position, vertToPrint[i + 1].position);
-            }
-        }
-
-        Gizmos.color = Color.red;
-        foreach (Vector3 item in points)
-        {
-            Gizmos.DrawSphere(item, 0.1f);
-        }
-
-        /*if (Application.isPlaying && twoDpoints != null && debugMode)
-        {
-            foreach (var point in twoDpoints)
-            {
-                if (point.Value.Walkable)
-                {
-                    if (!debugOnlyNonWalkable)
-                    {
-                        Gizmos.color = Color.black;
-                        Gizmos.DrawSphere(point.Value.GetPosition(), 0.1f);
-                    }
-                }
-                else
-                {
-                    Gizmos.color = Color.red;
-                    Gizmos.DrawSphere(point.Value.GetPosition(), 0.1f);
-                }
-            }
-        }*/
+       
     }
 
     #region [Getter / Setter]
@@ -186,6 +259,11 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
     public float GetPointHeightOffset()
     {
         return pointHeightOffset;
+    }
+
+    public BaseGridNode[,] GetMatrix()
+    {
+        return matrix;
     }
     #endregion
 }

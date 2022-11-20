@@ -314,7 +314,10 @@ public class Triangulate : MonoBehaviour
 
 			for (int j = 0; j < newEdges.Count; j++)
 			{
-				edges.Add(newEdges[j]);
+                if (!edges.Contains(newEdges[j]))
+                {
+					edges.Add(newEdges[j]);
+				}
 			}
 		}
 

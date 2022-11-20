@@ -41,10 +41,7 @@ public class HalfEdge
 		Vertex c = one.prevEdge.v;
 		Vertex d = one.oppositeEdge.nextEdge.v;
 
-
-
 		//Flip
-
 		//Change vertex
 		a.halfEdge = one.nextEdge;
 		c.halfEdge = one.oppositeEdge.nextEdge;

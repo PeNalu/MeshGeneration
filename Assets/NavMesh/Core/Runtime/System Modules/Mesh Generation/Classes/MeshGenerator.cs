@@ -8,6 +8,12 @@ public class MeshGenerator : MonoBehaviour
     [SerializeField]
     private bool debugMode = false;
 
+    [SerializeField]
+    private bool optimize = true;
+
+    [SerializeField]
+    private Material material;
+
     //Stored required properties.
     private Vector2Int size;
     private Vector3[] vertices;
@@ -23,7 +29,14 @@ public class MeshGenerator : MonoBehaviour
 
     public void Initialize(List<Vector3> points)
     {
-        List<Triangle> triangles = Triangulate.TriangulateConcavePolygon(points);
+        List<Vertex> vertices = new List<Vertex>();
+        foreach (Vector3 pos in points)
+        {
+            vertices.Add(new Vertex(pos));
+        }
+        points = JarvisMarchAlgorithm.GetConvexHull(vertices).Select(x => x.position).ToList();
+
+        List<Triangle> triangles = Triangulate.TriangulateByFlippingEdges(points);
 
         List<TriangleTriangleIntersection.Triangle> tri = new List<TriangleTriangleIntersection.Triangle>();
         foreach (Triangle item in triangles)
@@ -37,6 +50,83 @@ public class MeshGenerator : MonoBehaviour
         }
 
         TriangleTriangleIntersection.CreateTriangleMesh(tri, gameObject);
+    }
+
+    public void Initialize(Dictionary<float, List<Vector3>> clusters)
+    {
+        int i = 0;
+        foreach (KeyValuePair<float, List<Vector3>> item in clusters)
+        {
+            GameObject gO = new GameObject($"Cluster {i}");
+            gO.AddComponent<MeshFilter>();
+            gO.AddComponent<MeshRenderer>();
+
+            List<Vertex> vertices = new List<Vertex>();
+            List<Vector3> points = item.Value;
+            foreach (Vector3 pos in item.Value)
+            {
+                vertices.Add(new Vertex(pos));
+            }
+            points = JarvisMarchAlgorithm.GetConvexHull(vertices).Select(x => x.position).ToList();
+
+            List<Triangle> triangles = Triangulate.TriangulateByFlippingEdges(points);
+
+            List<TriangleTriangleIntersection.Triangle> tri = new List<TriangleTriangleIntersection.Triangle>();
+            foreach (Triangle tr in triangles)
+            {
+                TriangleTriangleIntersection.Triangle triangle = new TriangleTriangleIntersection.Triangle();
+                triangle.p1 = tr.v1.position;
+                triangle.p2 = tr.v2.position;
+                triangle.p3 = tr.v3.position;
+
+                tri.Add(triangle);
+            }
+
+            TriangleTriangleIntersection.CreateTriangleMesh(tri, gO);
+
+            i++;
+        }
+    }
+
+    public void Initialize(List<Cluster> clusters)
+    {
+        int i = 0;
+        foreach (Cluster item in clusters)
+        {
+            GameObject gO = new GameObject($"Cluster {i}");
+            gO.AddComponent<MeshFilter>();
+            MeshRenderer mR = gO.AddComponent<MeshRenderer>();
+            mR.materials = new Material[] { material };
+
+            List<Vertex> vertices = new List<Vertex>();
+            HashSet<Vector3> points = item.GetPoints();
+            foreach (Vector3 pos in points)
+            {
+                vertices.Add(new Vertex(pos));
+            }
+
+            if (optimize)
+            {
+                points = JarvisMarchAlgorithm.GetConvexHull(vertices).Select(x => x.position).ToHashSet();
+            }
+
+            List<Triangle> triangles = Triangulate.TriangulateByFlippingEdges(points.ToList());
+
+            List<TriangleTriangleIntersection.Triangle> tri = new List<TriangleTriangleIntersection.Triangle>();
+            foreach (Triangle tr in triangles)
+            {
+                TriangleTriangleIntersection.Triangle triangle = new TriangleTriangleIntersection.Triangle();
+                triangle.p1 = tr.v1.position;
+                triangle.p2 = tr.v2.position;
+                triangle.p3 = tr.v3.position;
+
+                tri.Add(triangle);
+            }
+
+            TriangleTriangleIntersection.CreateTriangleMesh(tri, gO);
+
+            i++;
+        }
     }
 
     public void Initialize(Vector2Int size, Vector3[,] vecMatrix)

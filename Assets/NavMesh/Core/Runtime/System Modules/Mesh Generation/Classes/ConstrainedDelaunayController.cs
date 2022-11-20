@@ -12,6 +12,9 @@ public class ConstrainedDelaunayController : MonoBehaviour
     private List<Transform> constrainedTransforms;
 
     [SerializeField]
+    private List<Transform> conTrans;
+
+    [SerializeField]
     private GameObject gmObj;
 
     [SerializeField]
@@ -26,6 +29,7 @@ public class ConstrainedDelaunayController : MonoBehaviour
         //Generate the random sites
         //List<Vector3> points = transforms.Select(x => x.position).ToList();
         List<Vector3> constrainedPoints = constrainedTransforms.Select(x => x.position).ToList();
+        List<Vector3> conPoints = conTrans.Select(x => x.position).ToList();
         List<Vector3> points = new List<Vector3>();
 
         //Generate random numbers with a seed
@@ -34,21 +38,21 @@ public class ConstrainedDelaunayController : MonoBehaviour
         float max = radius;
         float min = -radius;
 
-        /*        for (int i = 0; i < numberOfPoints; i++)
-                {
-                    float randomX = Random.Range(min, max);
-                    float randomZ = Random.Range(min, max);
+        for (int i = 0; i < numberOfPoints; i++)
+        {
+            float randomX = Random.Range(min, max);
+            float randomZ = Random.Range(min, max);
 
-                    points.Add(new Vector3(randomX, transform.position.y, randomZ));
-                }*/
+            points.Add(new Vector3(randomX, transform.position.y, randomZ));
+        }
 
-        for (int i = 0; i < radius; i++)
+/*        for (int i = 0; i < radius; i++)
         {
             for (int j = 0; j < radius; j++)
             {
                 points.Add(new Vector3(i + Random.Range(0, 0.15f), 0, j + Random.Range(0, 0.15f)));
             }
-        }
+        }*/
 
         Gizmos.color = Color.red;
         foreach (Vector3 point in points)
@@ -66,9 +70,9 @@ public class ConstrainedDelaunayController : MonoBehaviour
             }
             points = JarvisMarchAlgorithm.GetConvexHull(vertices).Select(x => x.position).ToList();
         }
-
-        triangles = Triangulate.TriangulateByFlippingEdges(points);
-        //triangles = ConstrainedDelaunay.GenerateTriangulation(points, constrainedPoints);
+        constrainedPoints.AddRange(conPoints);
+        //triangles = Triangulate.TriangulateByFlippingEdges(points);
+        triangles = ConstrainedDelaunay.GenerateTriangulation(points, constrainedPoints);
 
         //List<Triangle> triangles = Triangulate.TriangulateByFlippingEdges(points);
         List<TriangleTriangleIntersection.Triangle> tri = new List<TriangleTriangleIntersection.Triangle>();

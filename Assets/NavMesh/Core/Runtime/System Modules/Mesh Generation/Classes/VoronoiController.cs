@@ -5,9 +5,7 @@ using UnityEngine;
 public class VoronoiController : MonoBehaviour
 {
     public int seed = 0;
-
     public float halfMapSize = 10f;
-
     public float numberOfPoints = 20;
 
     private void OnDrawGizmos()
@@ -29,7 +27,6 @@ public class VoronoiController : MonoBehaviour
             randomSites.Add(new Vector3(randomX, 0f, randomZ));
         }
 
-
         //Points outside of the screen for voronoi which has some cells that are infinite
         float bigSize = halfMapSize * 5f;
 
@@ -40,10 +37,8 @@ public class VoronoiController : MonoBehaviour
         randomSites.Add(new Vector3(bigSize, 0f, 0f));
         randomSites.Add(new Vector3(-bigSize, 0f, 0f));
 
-
         //Generate the voronoi diagram
         List<VoronoiCell> cells = DelaunayToVoronoi.GenerateVoronoiDiagram(randomSites);
-
 
         //Debug
         //Display the voronoi diagram
@@ -55,7 +50,6 @@ public class VoronoiController : MonoBehaviour
         for (int i = 0; i < randomSites.Count; i++)
         {
             float radius = 0.2f;
-
             Gizmos.DrawSphere(randomSites[i], radius);
         }
     }
