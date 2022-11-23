@@ -103,7 +103,7 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
             }
         }
 
-        meshGenerator.Initialize(new Vector2Int(size.x * 2, size.y * 2), vecMatrix);
+        meshGenerator.Initialize(new Vector2Int(size.x * 2, size.y * 2), vecMatrix, maxSlope);
     }
 
 

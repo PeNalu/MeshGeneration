@@ -124,12 +124,13 @@ public class MeshGenerator : MonoBehaviour
             }
 
             TriangleTriangleIntersection.CreateTriangleMesh(tri, gO);
-
+            MeshCutter meshCutter = gO.AddComponent<MeshCutter>();
+            meshCutter.Initialize(gO.GetComponent<MeshFilter>());
             i++;
         }
     }
 
-    public void Initialize(Vector2Int size, Vector3[,] vecMatrix)
+    public void Initialize(Vector2Int size, Vector3[,] vecMatrix, float slopAngle)
     {
         this.size = size;
         vertices = new Vector3[(size.x) * (size.y)];
@@ -143,22 +144,47 @@ public class MeshGenerator : MonoBehaviour
             }
         }
 
-        int[] triangles = new int[((size.x - 1) * (size.y - 1)) * 6];
+        //int[] triangles = new int[((size.x - 1) * (size.y - 1)) * 6];
+        List<int> vs = new List<int>();
 
         for (int ti = 0, vi = 0, y = 0; y < size.y - 1; y++, vi++)
         {
             for (int x = 0; x < size.x - 1; x++, ti += 6, vi++)
             {
-                triangles[ti] = vi;
-                triangles[ti + 1] = triangles[ti + 4] = vi + size.x;
-                triangles[ti + 2] = triangles[ti + 3] = vi + 1;
-                triangles[ti + 5] = vi + size.x + 1;
+                /*                triangles[ti] = vi;
+                                triangles[ti + 1] = triangles[ti + 4] = vi + size.x;
+                                triangles[ti + 2] = triangles[ti + 3] = vi + 1;
+                                triangles[ti + 5] = vi + size.x + 1;*/
+                //vs.AddRange(new int[6] { 0, 0, 0, 0, 0, 0 }) ;
+
+                Vector3 normal2 = Vector3.Cross(vertices[vi + 1] - vertices[vi + size.x], vertices[vi + size.x] - vertices[vi + size.x + 1]);
+                Vector3 normal1 = Vector3.Cross(vertices[vi] - vertices[vi + 1], vertices[vi + size.x] - vertices[vi]);
+                int angle1 = (int)Vector3.Angle(Vector3.up, normal1);
+                int angle2 = (int)Vector3.Angle(Vector3.up, normal2);
+
+                if(angle1 <= slopAngle)
+                {
+                    vs.AddRange(new int[3] { 0, 0, 0 });
+                    vs[(vs.Count - 3)] = vi;
+                    vs[(vs.Count - 3) + 1] = vi + size.x;
+                    vs[(vs.Count - 3) + 2] = vi + 1;
+                }
+
+                if (angle2 <= slopAngle)
+                {
+                    vs.AddRange(new int[3] { 0, 0, 0 });
+                    vs[(vs.Count - 3) + 1] = vi + size.x;
+                    vs[(vs.Count - 3)] = vi + 1;
+                    vs[(vs.Count - 3) + 2] = vi + size.x + 1;
+                }
             }
         }
 
         mesh.vertices = vertices;
-        mesh.triangles = triangles;
+        mesh.triangles = vs.ToArray();
         GetComponent<MeshFilter>().mesh = mesh;
+        MeshCutter meshCutter = gameObject.AddComponent<MeshCutter>();
+        meshCutter.Initialize(GetComponent<MeshFilter>());
     }
 
     private void OnDrawGizmos()
