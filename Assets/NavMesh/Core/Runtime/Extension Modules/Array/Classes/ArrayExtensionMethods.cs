@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 using System;
 
 public static class ArrayExtensionMethods // : MonoBehaviour
@@ -156,18 +157,19 @@ public static class ArrayExtensionMethods // : MonoBehaviour
         return a;
     }
 
-
-
-    //the following two functions are specific to the "generating holes dynamically" project
-    public static List<int> RemoveAllSpecifiedIndicesFromArray(this int[] a, bool[] indicesToRemove)
+    public static int[] RemoveAllSpecifiedIndicesFromArray(this int[] a, bool[] indicesToRemove)
     {
-        List<int> b = new List<int>();
-        for (int i = 0; i < indicesToRemove.Length; ++i)
+        int i = 0;
+        int[] res = new int[a.Length];
+        for (int j = 0; j < a.Length; j++)
         {
-            if (!indicesToRemove[i])
-                b.Add(a[i]);
+            if (!indicesToRemove[j])
+            {
+                res[i] = a[j];
+                i++;
+            }
         }
-        return b;
+        return res[0..i];
     }
     public static List<int> IndexOf(this Array a, object o)
     {
