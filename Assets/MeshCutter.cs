@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using ApexInspector;
+using System.Diagnostics;
+using System;
 
 public class MeshCutter : MonoBehaviour
 {
@@ -59,12 +61,30 @@ public class MeshCutter : MonoBehaviour
         origuvs.CopyTo(uvs, 0);
 
         trisWithVertex = new List<int>[origvertices.Length];
+
         for (int i = 0; i < origvertices.Length; ++i)
         {
-            trisWithVertex[i] = origtriangles.IndexOf(i);
-
+            List<int> res = new List<int>();
+            for (int j = 0; j < origtriangles.Length; j++)
+            {
+                if (origtriangles[j] == i)
+                {
+                    res.Add(j);
+                }
+            }
+            trisWithVertex[i] = res;
         }
         filled = true;
+    }
+
+    public void PrintArr(List<int> arr)
+    {
+        string res = "";
+        for (int i = 0; i < arr.Count; i++)
+        {
+            res += $" {arr[i]}";
+        }
+        print(res);
     }
 
     public void Remesh()
@@ -74,13 +94,15 @@ public class MeshCutter : MonoBehaviour
 
     private Mesh GenerateMeshWithHoles()
     {
+        Transform mYTransform = transform;
         foreach (MeshObstacle obstacle in meshObstacles)
         {
             Vector3 trackPos = obstacle.transform.position;
+            float dist = obstacle.GetDistance() * obstacle.GetDistance();
             for (int i = 0; i < origvertices.Length; ++i)
             {
-                Vector3 v = new Vector3(origvertices[i].x * transform.localScale.x, origvertices[i].y * transform.localScale.y, origvertices[i].z * transform.localScale.z);
-                if ((v + transform.position - trackPos).magnitude < obstacle.GetDistance())
+                Vector3 v = Vector3.Scale(origvertices[i], mYTransform.localScale);
+                if ((v + mYTransform.position - trackPos).sqrMagnitude < dist)
                 {
                     for (int j = 0; j < trisWithVertex[i].Count; ++j)
                     {
@@ -93,17 +115,34 @@ public class MeshCutter : MonoBehaviour
                 }
             }
         }
-        triangles = origtriangles;
-        triangles = triangles.RemoveAllSpecifiedIndicesFromArray(trianglesDisabled).ToArray();
+        triangles = origtriangles.Clone() as int[];
+        //triangles = triangles.RemoveAllSpecifiedIndicesFromArray(trianglesDisabled);
+        RemoveAllSpecifiedIndicesFromArray(ref triangles, trianglesDisabled);
+        print(trianglesDisabled.Length);
 
-        mesh.SetVertices(vertices.ToList<Vector3>());
-        mesh.SetNormals(normals.ToList());
-        mesh.SetUVs(0, uvs.ToList());
+        mesh.SetVertices(vertices);
+        mesh.SetNormals(normals);
+        mesh.SetUVs(0, uvs);
         mesh.SetTriangles(triangles, 0);
         for (int i = 0; i < trianglesDisabled.Length; ++i)
             trianglesDisabled[i] = false;
         return mesh;
     }
+
+    public void RemoveAllSpecifiedIndicesFromArray(ref int[] a, bool[] indicesToRemove)
+    {
+        int i = 0;
+        for (int j = 0; j < a.Length; j++)
+        {
+            if (!indicesToRemove[j])
+            {
+                a[i++] = a[j];
+            }
+        }
+
+        a = a[0..i];
+    }
+
     private Mesh GenerateMeshWithFakeHoles()
     {
         Vector3 trackPos = trackedObjects[0].position;
