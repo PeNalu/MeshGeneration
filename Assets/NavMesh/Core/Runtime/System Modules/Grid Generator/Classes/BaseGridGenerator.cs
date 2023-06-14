@@ -1,5 +1,6 @@
 using ApexInspector;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -14,6 +15,9 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
     [Foldout("Advanced Settings")]
     [NotNull]
     private MeshGenerator meshGenerator;
+
+    [SerializeField]
+    private LayerMask cullingMask;
 
     [SerializeField]
     [Foldout("Advanced Settings")]
@@ -49,6 +53,8 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
     [VisibleIf("debugMode")]
     private bool debugOnlyNonWalkable;
 
+    public Vector2 cellSize;
+
     //Stored required properties.
     private Dictionary<Vector2Int, BaseGridNode> twoDpoints;
     private HashSet<Vector3> points;
@@ -78,6 +84,8 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
 
     private void ByPoints(Vector3 startPosition, float rHeight)
     {
+        var sw = new Stopwatch();
+        sw.Start();
         for (int x = -size.x; x < size.x; x++)
         {
             for (int z = -size.y; z < size.y; z++)
@@ -86,11 +94,14 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
             }
         }
 
-        for (int z = 0; z < size.y * 2; z++)
+/*        int a = size.y * 2 / (int)cellSize.x;
+        int b = size.x * 2 / (int)cellSize.y;
+
+        for (int z = 0; z < a; z++)
         {
-            for (int x = 0; x < size.x * 2; x++)
+            for (int x = 0; x < b; x++)
             {
-                Vector3 sPosition = new Vector3(startPosition.x - size.x, startPosition.y, startPosition.z - size.y);
+                Vector3 sPosition = new Vector3(startPosition.x - b * z, startPosition.y, startPosition.z - a * x);
 
                 RaycastHit hit;
                 Vector3 pos = sPosition + new Vector3(x + Random.Range(0, 0.15f), rHeight, z + Random.Range(0, 0.15f));
@@ -101,9 +112,29 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
                     vecMatrix[x, z] = nodePos;
                 }
             }
+        }*/
+
+
+        for (int z = 0; z < size.y * 2; z++)
+        {
+            for (int x = 0; x < size.x * 2; x++)
+            {
+                Vector3 sPosition = new Vector3(startPosition.x - size.x, startPosition.y, startPosition.z - size.y);
+
+                RaycastHit hit;
+                Vector3 pos = sPosition + new Vector3(x + Random.Range(0, 0.15f), rHeight, z + Random.Range(0, 0.15f));
+                if (Physics.Raycast(pos, Vector3.down, out hit, float.MaxValue, cullingMask))
+                {
+                    Vector3 nodePos = new Vector3(hit.point.x, hit.point.y + pointHeightOffset, hit.point.z);
+                    points.Add(nodePos);
+                    vecMatrix[x, z] = nodePos;
+                }
+            }
         }
 
         meshGenerator.Initialize(new Vector2Int(size.x * 2, size.y * 2), vecMatrix, maxSlope);
+        sw.Stop();
+        print(sw.ElapsedMilliseconds);
     }
 
 
