@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -144,19 +145,11 @@ public class MeshGenerator : MonoBehaviour
             }
         }
 
-        //int[] triangles = new int[((size.x - 1) * (size.y - 1)) * 6];
         List<int> vs = new List<int>();
-
         for (int ti = 0, vi = 0, y = 0; y < size.y - 1; y++, vi++)
         {
             for (int x = 0; x < size.x - 1; x++, ti += 6, vi++)
             {
-                /*                triangles[ti] = vi;
-                                triangles[ti + 1] = triangles[ti + 4] = vi + size.x;
-                                triangles[ti + 2] = triangles[ti + 3] = vi + 1;
-                                triangles[ti + 5] = vi + size.x + 1;*/
-                //vs.AddRange(new int[6] { 0, 0, 0, 0, 0, 0 }) ;
-
                 Vector3 normal2 = Vector3.Cross(vertices[vi + 1] - vertices[vi + size.x], vertices[vi + size.x] - vertices[vi + size.x + 1]);
                 Vector3 normal1 = Vector3.Cross(vertices[vi] - vertices[vi + 1], vertices[vi + size.x] - vertices[vi]);
                 int angle1 = (int)Vector3.Angle(Vector3.up, normal1);
