@@ -20,7 +20,7 @@ public class GridSurface : MonoBehaviour
         BaseGridGenerator.Instance.BuildGrid(transform, new Vector2Int(radius, radius));
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         if (debugMode)
         {

@@ -35,6 +35,7 @@ public class AStarSearchPF : PathBuilder
                     currentPathTile = currentPathTile.GetConnection();
                 }
 
+                path.Reverse();
                 return path;
             }
 

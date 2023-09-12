@@ -17,6 +17,7 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
     private MeshGenerator meshGenerator;
 
     [SerializeField]
+    [Foldout("Advanced Settings")]
     private LayerMask cullingMask;
 
     [SerializeField]
@@ -52,8 +53,6 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
     [Foldout("Debug Settings")]
     [VisibleIf("debugMode")]
     private bool debugOnlyNonWalkable;
-
-    public Vector2 cellSize;
 
     //Stored required properties.
     private Dictionary<Vector2Int, BaseGridNode> twoDpoints;
