@@ -1,9 +1,8 @@
-using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
 using ApexInspector;
-using System.Diagnostics;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public class MeshCutter : MonoBehaviour
 {
@@ -15,6 +14,7 @@ public class MeshCutter : MonoBehaviour
     [Range(0, 100)]
     private float minDistance = 2f;
 
+    #region [Properties]
     // Stored required properties.
     private Mesh mesh;
     private MeshFilter filter;
@@ -30,15 +30,21 @@ public class MeshCutter : MonoBehaviour
     private bool[] trianglesDisabled;
     private List<int>[] trisWithVertex;
     private List<MeshObstacle> meshObstacles;
+    private List<Vector2Int> pointsToDisable;
+    #endregion
 
     private void Update()
     {
         if (filled)
         {
-            Remesh();
+            filter.mesh = GenerateMeshWithHoles();
         }
     }
 
+    /// <summary>
+    /// Adjusts all the necessary parameters.
+    /// </summary>
+    /// <param name="meshFilter"></param>
     public void Initialize(MeshFilter meshFilter)
     {
         meshObstacles = FindObjectsOfType<MeshObstacle>().ToList();
@@ -60,6 +66,7 @@ public class MeshCutter : MonoBehaviour
         origtriangles.CopyTo(triangles, 0);
         origuvs.CopyTo(uvs, 0);
 
+        pointsToDisable = new List<Vector2Int>();
         trisWithVertex = new List<int>[origvertices.Length];
 
         for (int i = 0; i < origvertices.Length; ++i)
@@ -77,23 +84,16 @@ public class MeshCutter : MonoBehaviour
         filled = true;
     }
 
-    public void PrintArr(List<int> arr)
-    {
-        string res = "";
-        for (int i = 0; i < arr.Count; i++)
-        {
-            res += $" {arr[i]}";
-        }
-        print(res);
-    }
-
-    public void Remesh()
-    {
-        filter.mesh = GenerateMeshWithHoles();
-    }
-
+    /// <summary>
+    /// Recalculate the holes in the mesh.
+    /// </summary>
     private Mesh GenerateMeshWithHoles()
     {
+        // Clearing information about past holes.
+        BaseGridGenerator.Instance.SetWolkable(pointsToDisable, true);
+        pointsToDisable.Clear();
+
+        // Calculate hole.
         Transform mYTransform = transform;
         foreach (MeshObstacle obstacle in meshObstacles)
         {
@@ -104,6 +104,8 @@ public class MeshCutter : MonoBehaviour
                 Vector3 v = Vector3.Scale(origvertices[i], mYTransform.localScale);
                 if ((v + mYTransform.position - trackPos).sqrMagnitude < dist)
                 {
+                    Vector2Int twoDPos = new Vector2Int(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.z));
+                    pointsToDisable.Add(twoDPos);
                     for (int j = 0; j < trisWithVertex[i].Count; ++j)
                     {
                         int value = trisWithVertex[i][j];
@@ -116,33 +118,28 @@ public class MeshCutter : MonoBehaviour
             }
         }
         triangles = origtriangles.Clone() as int[];
-        //triangles = triangles.RemoveAllSpecifiedIndicesFromArray(trianglesDisabled);
         RemoveAllSpecifiedIndicesFromArray(ref triangles, trianglesDisabled);
-        print(trianglesDisabled.Length);
 
+        // Change mesh.
         mesh.SetVertices(vertices);
         mesh.SetNormals(normals);
         mesh.SetUVs(0, uvs);
         mesh.SetTriangles(triangles, 0);
+
         for (int i = 0; i < trianglesDisabled.Length; ++i)
+        {
             trianglesDisabled[i] = false;
+        }
+
+        // Setting non walkable points.
+        BaseGridGenerator.Instance.SetWolkable(pointsToDisable, false);
+
         return mesh;
     }
 
-    public void RemoveAllSpecifiedIndicesFromArray(ref int[] a, bool[] indicesToRemove)
-    {
-        int i = 0;
-        for (int j = 0; j < a.Length; j++)
-        {
-            if (!indicesToRemove[j])
-            {
-                a[i++] = a[j];
-            }
-        }
-
-        a = a[0..i];
-    }
-
+    /// <summary>
+    /// Creates a hole, but does not rebuild navigation.
+    /// </summary>
     private Mesh GenerateMeshWithFakeHoles()
     {
         Vector3 trackPos = trackedObjects[0].position;
@@ -162,5 +159,19 @@ public class MeshCutter : MonoBehaviour
         mesh.SetUVs(0, uvs.ToList());
         mesh.SetTriangles(triangles, 0);
         return mesh;
+    }
+
+    public void RemoveAllSpecifiedIndicesFromArray(ref int[] a, bool[] indicesToRemove)
+    {
+        int i = 0;
+        for (int j = 0; j < a.Length; j++)
+        {
+            if (!indicesToRemove[j])
+            {
+                a[i++] = a[j];
+            }
+        }
+
+        a = a[0..i];
     }
 }

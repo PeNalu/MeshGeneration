@@ -275,6 +275,14 @@ public class BaseGridGenerator : Singleton<BaseGridGenerator>
        
     }
 
+    public void SetWolkable(List<Vector2Int> points, bool value)
+    {
+        for (int i = 0; i < points.Count; i++)
+        {
+            twoDpoints[points[i]].Walkable = value;
+        }
+    }
+
     #region [Getter / Setter]
     public BaseGridNode GetNodeByPosition(Vector2Int pos)
     {
