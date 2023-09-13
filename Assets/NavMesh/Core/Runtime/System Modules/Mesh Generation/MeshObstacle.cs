@@ -1,5 +1,8 @@
+using ApexInspector;
 using UnityEngine;
 
+[HideScriptField]
+[DisallowMultipleComponent]
 public class MeshObstacle : MonoBehaviour
 {
     [SerializeField]
@@ -11,7 +14,8 @@ public class MeshObstacle : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = gizmosColor;
-        Gizmos.DrawCube(transform.position, new Vector3(distance, distance, distance));
+        //Gizmos.DrawCube(transform.position, new Vector3(distance, distance, distance));
+        Gizmos.DrawSphere(transform.position, distance);
     }
 
     #region [Getter // Setter]

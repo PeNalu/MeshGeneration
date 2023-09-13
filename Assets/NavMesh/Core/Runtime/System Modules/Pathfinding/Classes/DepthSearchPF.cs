@@ -41,6 +41,7 @@ public class DepthSearchPF : PathBuilder
         }
 
         path.Add(startNode);
+        path.Reverse();
         return path;
     }
 }

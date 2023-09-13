@@ -7,30 +7,25 @@ using UnityEngine;
 public class AIAgent : MonoBehaviour
 {
     [SerializeField]
-    private Transform target;
-
-    [SerializeField]
     [MinValue(0.1f)]
     private float speed = 3f;
 
     //Stored requred properties.
     private List<BaseGridNode> path;
 
+    /// <summary>
+    /// Sets the movement goal for the agent.
+    /// </summary>
+    /// <param name="targetTransform"></param>
     public void SetDestination(Transform targetTransform)
     {
-        target = targetTransform;
-        path = PathBuilder.FindPath(transform.position, target.position);
+        path = PathBuilder.FindPath(transform.position, targetTransform.position);
         StartCoroutine(MoveTo());
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            SetDestination(target);
-        }
-    }
-
+    /// <summary>
+    /// Responsible for the logic of movement from one point to another along the found route.
+    /// </summary>
     private IEnumerator MoveTo()
     {
         for (int i = 0; i < path.Count - 1; i++)

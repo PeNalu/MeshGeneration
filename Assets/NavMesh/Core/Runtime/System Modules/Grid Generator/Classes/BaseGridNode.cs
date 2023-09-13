@@ -3,10 +3,11 @@ using UnityEngine;
 
 public class BaseGridNode
 {
-    private static readonly List<Vector2Int> Dirs = new List<Vector2Int>() {
-            new Vector2Int(0, 1), new Vector2Int(-1, 0), new Vector2Int(0, -1), new Vector2Int(1, 0),
-            new Vector2Int(1, 1), new Vector2Int(1, -1), new Vector2Int(-1, -1), new Vector2Int(-1, 1)
-        };
+    #region [Properties]
+    public float G;
+    public float H;
+    public float F => G + H + cost;
+    public bool Walkable = true;
 
     private int cost;
     private int maxSlope = 50;
@@ -17,12 +18,7 @@ public class BaseGridNode
     private BaseGridNode connection;
 
     private bool hashing = true;
-
-    public float G;
-    public float H;
-    public float F => G + H + cost;
-
-    public bool Walkable = true;
+    #endregion
 
     public BaseGridNode(int cost, Vector3 pos, Vector2Int matrixPos)
     {
@@ -31,7 +27,7 @@ public class BaseGridNode
         this.matrixPos = matrixPos;
     }
 
-    public void CalculateNeighbors()
+    public virtual void CalculateNeighbors()
     {
         neighbors = new List<BaseGridNode>();
         BaseGridNode[,] matrix = BaseGridGenerator.Instance.GetMatrix();
@@ -102,14 +98,9 @@ public class BaseGridNode
         return matrixPos;
     }
 
-    public int GetCost()
+    public float GetCost()
     {
-        return cost;
-    }
-
-    public void SetCost(int value)
-    {
-        cost = value;
+        return G + H + cost;
     }
 
     public void SetConnection(BaseGridNode node)

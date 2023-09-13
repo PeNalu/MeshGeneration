@@ -54,6 +54,7 @@ public class DijkstraSearchPF : PathBuilder
         }
 
         path.Add(startNode);
+        path.Reverse();
         return path;
     }
 
